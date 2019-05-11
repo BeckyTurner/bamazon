@@ -21,10 +21,17 @@ connection.connect(function (error) {
 // load items from DB
 function viewProducts() {
     connection.query("SELECT * from products;", function (error, results) {
-        if (error) throw error;
-        else console.table(results);
+        if (!error) console.table(results);
         placeOrder();
     })
+};
+
+function purchase() {
+    connection.query("UPDATE products SET ? WHERE ?;", function(error, results) {
+        if (!error) {
+            console.log("Thank you for your purchase! The inventory has been updated!");
+        }
+    });
 };
 
 function placeOrder() {
@@ -39,25 +46,41 @@ function placeOrder() {
             type: "input",
             message: "How many would you like to buy?"
         }
-    ])
-        .then(function (answer) {
-            var product = answer.product;
-            var quantity = answer.quantity;
-            // queries DB from user input
-            var query = "SELECT * FROM products WHERE ?"
-            connection.query(query, { item_id: product }, function (error, res) {
-                var productInfo = res[0];
-                if (error) throw error;
+    ]).then(function (answer) {
+        var product = answer.product;
+        var quantity = answer.quantity;
+        // queries DB from user input
+        var query = "SELECT * FROM products WHERE ?"
+        connection.query(query, { item_id: product }, function (error, res) {
+            var productInfo = res[0];
+            if (error) throw error;
 
-                // validation of quantity
-                if (quantity < productInfo.stock_quantity) {
-                    console.log("Thank you for your purchase!")
-                } else {
-                    console.log("There isn't enough stock left!");
-                    viewProducts();
-                }
-            });
-        })
+            // validation of quantity
+            if (quantity <= productInfo.stock_quantity) {
+                   var query = "UPDATE products SET ? WHERE ?";
+                   connection.query(query, {stock_quantity: product}, function (error, res) {
+                       if (!error) {
+                        purchase();
+                       }
+                   })
 
+                inquirer.prompt({
+                    name: 'anotherPurchase',
+                    type: "input",
+                    message: "Would you like to make another purchase? (y/n)",
+                }).then(function (answer) {
+                    if (answer.anotherPurchase === "y") {
+                        viewProducts();
+                    } else {
+                        console.log("Thank you! Come again!")
+                        connection.end();
+                    }
+                })
+            } else if (quantity > productInfo.stock_quantity) {
+                console.log("There isn't enough stock left! Please choose a smaller quantity");
+                viewProducts();
+            }
+        });
+    })
 }
 
