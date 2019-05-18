@@ -26,13 +26,7 @@ function viewProducts() {
     })
 };
 
-function purchase() {
-    connection.query("UPDATE products SET ? WHERE ?;", function(error, results) {
-        if (!error) {
-            console.log("Thank you for your purchase! The inventory has been updated!");
-        }
-    });
-};
+
 
 function placeOrder() {
     inquirer.prompt([
@@ -49,6 +43,7 @@ function placeOrder() {
     ]).then(function (answer) {
         var product = answer.product;
         var quantity = answer.quantity;
+
         // queries DB from user input
         var query = "SELECT * FROM products WHERE ?"
         connection.query(query, { item_id: product }, function (error, res) {
@@ -57,12 +52,12 @@ function placeOrder() {
 
             // validation of quantity
             if (quantity <= productInfo.stock_quantity) {
-                   var query = "UPDATE products SET ? WHERE ?";
-                   connection.query(query, {stock_quantity: product}, function (error, res) {
-                       if (!error) {
-                        purchase();
-                       }
-                   })
+                //updates DB
+                connection.query("UPDATE products SET stock_quantity = " + (productInfo.stock_quantity - quantity) + " WHERE item_id = " + product, function (error, res) {
+                    if (!error) {
+                        console.log("Thank you for your purchase! The inventory has been updated!");
+                    } else console.log(error);
+                })
 
                 inquirer.prompt({
                     name: 'anotherPurchase',
@@ -83,4 +78,3 @@ function placeOrder() {
         });
     })
 }
-
