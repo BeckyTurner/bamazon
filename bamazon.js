@@ -26,6 +26,23 @@ function viewProducts() {
     })
 };
 
+function anotherPurchase() {
+    inquirer.prompt({
+        name: 'anotherPurchase',
+        type: "input",
+        message: "Would you like to make another purchase? (y/n)",
+    }).then(function (answer) {
+        if (answer.anotherPurchase === "y") {
+            viewProducts();
+        } else {
+            console.log("Thank you! Come again!")
+            connection.end();
+        }
+    })
+
+};
+
+
 
 
 function placeOrder() {
@@ -56,21 +73,12 @@ function placeOrder() {
                 connection.query("UPDATE products SET stock_quantity = " + (productInfo.stock_quantity - quantity) + " WHERE item_id = " + product, function (error, res) {
                     if (!error) {
                         console.log("Thank you for your purchase! The inventory has been updated!");
+                        anotherPurchase();
                     } else console.log(error);
-                })
+                });
 
-                inquirer.prompt({
-                    name: 'anotherPurchase',
-                    type: "input",
-                    message: "Would you like to make another purchase? (y/n)",
-                }).then(function (answer) {
-                    if (answer.anotherPurchase === "y") {
-                        viewProducts();
-                    } else {
-                        console.log("Thank you! Come again!")
-                        connection.end();
-                    }
-                })
+
+
             } else if (quantity > productInfo.stock_quantity) {
                 console.log("There isn't enough stock left! Please choose a smaller quantity");
                 viewProducts();
